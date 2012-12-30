@@ -197,19 +197,14 @@ public abstract class AstProperty extends AstNode {
 		}
 		Object property = getProperty(bindings, context);
 		if (property == null && strict) {
-			throw new PropertyNotFoundException(LocalMessages.get("error.property.method.notfound", "null", base));
+			throw new PropertyNotFoundException(LocalMessages.get("error.property.property.notfound", "null", base));
 		}
-		String name = bindings.convert(property, String.class);
-		Method method = findMethod(name, base.getClass(), returnType, paramTypes);
-		try {
-			return method.invoke(base, paramValues);
-		} catch (IllegalAccessException e) {
-			throw new ELException(LocalMessages.get("error.property.method.access", name, base.getClass()));
-		} catch (IllegalArgumentException e) {
-			throw new ELException(LocalMessages.get("error.property.method.invocation", name, base.getClass()), e);
-		} catch (InvocationTargetException e) {
-			throw new ELException(LocalMessages.get("error.property.method.invocation", name, base.getClass()), e.getCause());
+		context.setPropertyResolved(false);
+		Object result = context.getELResolver().invoke(context, base, property, paramTypes, paramValues);
+		if (!context.isPropertyResolved()) {
+			throw new MethodNotFoundException(LocalMessages.get("error.identifier.method.notfound", property, base));
 		}
+		return result;
 	}
 
 	public AstNode getChild(int i) {
